@@ -17,5 +17,20 @@ services:
       interval: 5s
       retries: 10
 
+  # The pipeline CLI. Run commands on demand, e.g.
+  #   docker compose run --rm nemsa -v backfill --start 2025-10-01 --end 2025-11-01
+  nemsa:
+    build: .
+    profiles: ["cli"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nemsa}:${POSTGRES_PASSWORD:-nemsa}@db:5432/${POSTGRES_DB:-nemsa}
+      NEMSA_REGION: ${NEMSA_REGION:-SA1}
+      NEMSA_CACHE_DIR: /app/data/raw
+    volumes:
+      - ./data:/app/data
+
 volumes:
   pgdata:

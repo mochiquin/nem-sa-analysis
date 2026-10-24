@@ -32,3 +32,20 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: pytest -v
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose file
+        run: docker compose --profile cli config --quiet
+      - name: Build image
+        run: docker compose --profile cli build nemsa
+      - name: Start database and run CLI inside the container
+        run: |
+          docker compose up -d --wait db
+          docker compose run --rm nemsa --help
+          docker compose run --rm --entrypoint python nemsa -c \
+            "import psycopg, os; psycopg.connect(os.environ['DATABASE_URL']).close(); print('db ok')"
+      - name: Schema applied on first start
+        run: docker compose exec -T db psql -U nemsa -d nemsa -c '\dt'

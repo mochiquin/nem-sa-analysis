@@ -48,9 +48,27 @@ MMSDM monthly archives ─────────────► NEMOSIS ──
 
 ## Quick start
 
+### With Docker only
+
 ```bash
 cp .env.example .env
-docker compose up -d                 # PostgreSQL 16, schema applied on first start
+docker compose up -d db                                   # PostgreSQL 16, schema applied on first start
+docker compose --profile cli build                        # build the pipeline image
+
+docker compose run --rm nemsa -v backfill --start 2025-10-01 --end 2025-11-01
+docker compose run --rm nemsa -v ingest --limit 12
+docker compose run --rm nemsa gaps
+
+docker compose exec -T db psql -U nemsa -d nemsa < sql/analysis/01_negative_prices.sql
+```
+
+Downloaded raw files are cached in `./data` on the host.
+
+### With a local Python environment
+
+```bash
+cp .env.example .env
+docker compose up -d db
 pip install -e ".[dev]"
 
 nemsa -v backfill --start 2025-10-01 --end 2025-11-01   # one month of history
