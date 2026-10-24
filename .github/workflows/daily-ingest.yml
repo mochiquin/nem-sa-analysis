@@ -1,0 +1,27 @@
+name: Daily ingest
+
+# Loads new NEMweb DispatchIS files into the hosted database once a day.
+# Disabled until a DATABASE_URL repository secret is added
+# (Settings -> Secrets and variables -> Actions).
+
+on:
+  schedule:
+    - cron: "17 19 * * *"   # 05:47 Adelaide time (ACDT)
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    if: ${{ vars.INGEST_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEMSA_REGION: SA1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      # 'Current' keeps roughly the last couple of days of 5-minute files.
+      - run: nemsa -v ingest
